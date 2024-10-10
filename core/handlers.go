@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -56,11 +56,6 @@ func GetTasks(ctx *fiber.Ctx, tasks map[string]Task) error {
 	var tasksList []Task
 	for _, t := range tasks {
 		tasksList = append(tasksList, t)
-	}
-
-	type TasksJSON struct {
-		Error bool   `json:"error"`
-		Tasks []Task `json:"tasks"`
 	}
 
 	ret := TasksJSON{
