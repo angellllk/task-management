@@ -6,6 +6,9 @@ import (
 	"github.com/angellllk/task-management/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func StartServer() {
@@ -34,5 +37,19 @@ func StartServer() {
 		return taskHandler.DeleteTask(ctx)
 	})
 
-	app.Listen(":8080")
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		if err = app.Listen(":8080"); err != nil {
+			log.Fatalf("Error starting server: %v", err)
+		}
+	}()
+
+	<-stop
+
+	log.Println("Shutting down server...")
+	if err = app.Shutdown(); err != nil {
+		log.Fatalf("Error during shutdown: %v", err)
+	}
 }
