@@ -1,29 +1,36 @@
 package core
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+	"log"
+)
 
 func StartServer() *fiber.App {
 	app := fiber.New()
-	tasks := make(map[string]Task)
+	db, err := GetDBConnection()
+	if err != nil {
+		log.Printf("got error: %v", err)
+		return nil
+	}
 
 	app.Post("/tasks", func(ctx *fiber.Ctx) error {
-		return CreateTask(ctx, tasks)
+		return CreateTask(ctx, db)
 	})
 
 	app.Get("/tasks", func(ctx *fiber.Ctx) error {
-		return GetTasks(ctx, tasks)
+		return GetTasks(ctx, db)
 	})
 
 	app.Get("/tasks/:id", func(ctx *fiber.Ctx) error {
-		return GetTask(ctx, tasks)
+		return GetTask(ctx, db)
 	})
 
 	app.Put("/tasks/:id", func(ctx *fiber.Ctx) error {
-		return UpdateTask(ctx, tasks)
+		return UpdateTask(ctx, db)
 	})
 
 	app.Delete("/tasks/:id", func(ctx *fiber.Ctx) error {
-		return DeleteTask(ctx, tasks)
+		return DeleteTask(ctx, db)
 	})
 
 	return app

@@ -3,11 +3,12 @@ package core
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 	"log"
 	"time"
 )
 
-func CreateTask(ctx *fiber.Ctx, tasks map[string]Task) error {
+func CreateTask(ctx *fiber.Ctx, db *gorm.DB) error {
 	br := baseResponse{
 		Error:   true,
 		Message: "can't parse data",
@@ -35,7 +36,8 @@ func CreateTask(ctx *fiber.Ctx, tasks map[string]Task) error {
 
 	t.ID = uuid.NewString()
 	t.CreatedAt = time.Now()
-	tasks[t.ID] = t
+
+	db.Create(t)
 
 	return ctx.Status(fiber.StatusOK).JSON(baseResponse{
 		Error:   false,
@@ -43,44 +45,45 @@ func CreateTask(ctx *fiber.Ctx, tasks map[string]Task) error {
 	})
 }
 
-func GetTasks(ctx *fiber.Ctx, tasks map[string]Task) error {
+func GetTasks(ctx *fiber.Ctx, db *gorm.DB) error {
 	br := baseResponse{
 		Error:   true,
 		Message: "no tasks created",
 	}
 
+	var tasks []Task
+	db.Find(&tasks)
+
 	if len(tasks) == 0 {
 		return ctx.Status(fiber.StatusOK).JSON(br)
 	}
 
-	var tasksList []Task
-	for _, t := range tasks {
-		tasksList = append(tasksList, t)
-	}
-
 	ret := TasksJSON{
 		Error: false,
-		Tasks: tasksList,
+		Tasks: tasks,
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(ret)
 }
 
-func GetTask(ctx *fiber.Ctx, tasks map[string]Task) error {
+func GetTask(ctx *fiber.Ctx, db *gorm.DB) error {
 	br := baseResponse{
 		Error:   true,
 		Message: "task not found",
 	}
 
-	task, found := tasks[ctx.Params("id")]
-	if !found {
+	var t Task
+	id := ctx.Params("id")
+	db.Where("id = ?", id).First(&t)
+
+	if len(t.Title) == 0 {
 		return ctx.Status(fiber.StatusOK).JSON(br)
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(task)
+	return ctx.Status(fiber.StatusOK).JSON(t)
 }
 
-func UpdateTask(ctx *fiber.Ctx, tasks map[string]Task) error {
+func UpdateTask(ctx *fiber.Ctx, db *gorm.DB) error {
 	br := baseResponse{
 		Error:   true,
 		Message: "can't find task",
@@ -106,15 +109,17 @@ func UpdateTask(ctx *fiber.Ctx, tasks map[string]Task) error {
 		return ctx.Status(fiber.StatusOK).JSON(br)
 	}
 
-	task, found := tasks[ctx.Params("id")]
-	if !found {
+	var task Task
+	id := ctx.Params("id")
+	tx := db.Where("id = ?", id).First(&task)
+	if tx.Error != nil {
 		return ctx.Status(fiber.StatusOK).JSON(br)
 	}
 
-	task.Title = updatedTask.Title
-	task.Description = updatedTask.Description
-	task.Completed = updatedTask.Completed
-	tasks[task.ID] = task
+	tx = db.Model(&task).Updates(updatedTask)
+	if tx.Error != nil {
+		return ctx.Status(fiber.StatusOK).JSON(br)
+	}
 
 	return ctx.Status(fiber.StatusOK).JSON(baseResponse{
 		Error:   false,
@@ -122,18 +127,17 @@ func UpdateTask(ctx *fiber.Ctx, tasks map[string]Task) error {
 	})
 }
 
-func DeleteTask(ctx *fiber.Ctx, tasks map[string]Task) error {
+func DeleteTask(ctx *fiber.Ctx, db *gorm.DB) error {
 	br := baseResponse{
 		Error:   true,
 		Message: "can't find task",
 	}
 
-	_, found := tasks[ctx.Params("id")]
-	if !found {
+	id := ctx.Params("id")
+	tx := db.Where("id = ?", id).Delete(&Task{})
+	if tx.Error != nil {
 		return ctx.Status(fiber.StatusOK).JSON(br)
 	}
-
-	delete(tasks, ctx.Params("id"))
 
 	return ctx.Status(fiber.StatusOK).JSON(baseResponse{
 		Error:   false,

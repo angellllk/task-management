@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/gofiber/fiber/v2"
 	"io"
 	"net/http"
 	"testing"
@@ -43,6 +44,8 @@ func TestCreateTask(t *testing.T) {
 	if ret.Error {
 		t.Fatalf("got error: %s", ret.Message)
 	}
+
+	defer testCleanup(t, app, ret.Message)
 }
 
 func TestGetTasks(t *testing.T) {
@@ -66,6 +69,19 @@ func TestGetTasks(t *testing.T) {
 		t.Fatalf("got error: %v", err)
 	}
 
+	respBody, errRead := io.ReadAll(resp.Body)
+	if errRead != nil {
+		t.Fatalf("got error: %v", errRead)
+	}
+
+	var retCreate baseResponse
+	errUnmarshal := json.Unmarshal(respBody, &retCreate)
+	if errUnmarshal != nil {
+		t.Fatalf("got error: %v", errUnmarshal)
+	}
+
+	defer testCleanup(t, app, retCreate.Message)
+
 	getTasksReq, errReq := http.NewRequest(
 		http.MethodGet,
 		url,
@@ -79,18 +95,18 @@ func TestGetTasks(t *testing.T) {
 		t.Fatalf("got error: %v", err)
 	}
 
-	respBody, errRead := io.ReadAll(resp.Body)
+	respBody, errRead = io.ReadAll(resp.Body)
 	if errRead != nil {
 		t.Fatalf("got error: %v", errRead)
 	}
 
 	var ret TasksJSON
-	errUnmarshal := json.Unmarshal(respBody, &ret)
+	errUnmarshal = json.Unmarshal(respBody, &ret)
 	if errUnmarshal != nil {
 		t.Fatalf("got error: %v", errUnmarshal)
 	}
 
-	if ret.Error || len(ret.Tasks) == 0 {
+	if retCreate.Error || len(ret.Tasks) == 0 {
 		t.Fatalf("unexpected test result")
 	}
 }
@@ -126,6 +142,8 @@ func TestGetTask(t *testing.T) {
 	if errUnmarshal != nil {
 		t.Fatalf("got error: %v", errUnmarshal)
 	}
+
+	defer testCleanup(t, app, ret.Message)
 
 	id := ret.Message
 	getTasksUrl := "http://localhost:8080/tasks/" + id
@@ -175,6 +193,8 @@ func TestUpdateTask(t *testing.T) {
 	if errUnmarshal != nil {
 		t.Fatalf("got error: %v", errUnmarshal)
 	}
+
+	defer testCleanup(t, app, ret.Message)
 
 	body = `{"title":"new-title", "description":"new-description"}`
 	id := ret.Message
@@ -238,6 +258,9 @@ func TestDeleteTask(t *testing.T) {
 		http.MethodDelete,
 		deleteTaskUrl,
 		nil)
+	if errReq != nil {
+		t.Fatalf("got error: %v", errReq)
+	}
 
 	resp, err = app.Test(deleteTaskReq, -1)
 	if err != nil {
@@ -256,5 +279,23 @@ func TestDeleteTask(t *testing.T) {
 
 	if ret.Error {
 		t.Fatalf("unexpected test result")
+	}
+}
+
+func testCleanup(t *testing.T, app *fiber.App, id string) {
+	t.Helper()
+
+	deleteTaskUrl := "http://localhost:8080/tasks/" + id
+	deleteTaskReq, errReq := http.NewRequest(
+		http.MethodDelete,
+		deleteTaskUrl,
+		nil)
+	if errReq != nil {
+		t.Fatalf("got error: %v", errReq)
+	}
+
+	_, err := app.Test(deleteTaskReq, -1)
+	if err != nil {
+		t.Fatalf("got error: %v", err)
 	}
 }
