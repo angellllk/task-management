@@ -15,40 +15,77 @@ import (
 func TestCreateTask(t *testing.T) {
 	app := testServer(t)
 	url := "http://localhost:8080/tasks"
-	body := `{"title": "test", "description":"test"}`
 
-	bodyBytes := []byte(body)
-
-	createTaskReq, errReq := http.NewRequest(
-		http.MethodPost,
-		url,
-		bytes.NewReader(bodyBytes))
-	if errReq != nil {
-		t.Fatalf("got error: %v", errReq)
+	tests := []struct {
+		name    string
+		body    models.CreateTaskAPI
+		wantErr bool
+	}{
+		{
+			"create-task",
+			models.CreateTaskAPI{
+				Title:       "test",
+				Description: "test",
+			},
+			false,
+		},
+		{
+			"create-task-empty-title",
+			models.CreateTaskAPI{
+				Title:       "",
+				Description: "test",
+			},
+			true,
+		},
+		{
+			"create-task-empty-description",
+			models.CreateTaskAPI{
+				Title:       "test",
+				Description: "",
+			},
+			true,
+		},
 	}
 
-	createTaskReq.Header.Set("Content-Type", "application/json")
-	resp, err := app.Test(createTaskReq, -1)
-	if err != nil {
-		t.Fatalf("got error: %v", err)
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			bodyBytes, errMarshal := json.Marshal(tt.body)
+			if errMarshal != nil {
+				t.Fatalf("got error: %v", errMarshal)
+			}
 
-	respBody, errRead := io.ReadAll(resp.Body)
-	if errRead != nil {
-		t.Fatalf("got error: %v", errRead)
-	}
+			createTaskReq, errReq := http.NewRequest(http.MethodPost, url, bytes.NewReader(bodyBytes))
+			if errReq != nil {
+				t.Fatalf("got error: %v", errReq)
+			}
 
-	var ret models.HTTPResponse
-	errUnmarshal := json.Unmarshal(respBody, &ret)
-	if errUnmarshal != nil {
-		t.Fatalf("got error: %v", errUnmarshal)
-	}
+			createTaskReq.Header.Set("Content-Type", "application/json")
+			resp, err := app.Test(createTaskReq, -1)
+			if err != nil {
+				t.Fatalf("got error: %v", err)
+			}
 
-	if ret.Error {
-		t.Fatalf("got error: %s", ret.Message)
-	}
+			respBody, errRead := io.ReadAll(resp.Body)
+			if errRead != nil {
+				t.Fatalf("got error: %v", errRead)
+			}
 
-	defer testCleanup(t, app, ret.Message)
+			var ret models.HTTPResponse
+			errUnmarshal := json.Unmarshal(respBody, &ret)
+			if errUnmarshal != nil {
+				t.Fatalf("got error: %v", errUnmarshal)
+			}
+
+			hasError := ret.Error != false
+			if hasError != tt.wantErr {
+				t.Fatal()
+			}
+
+			if !hasError {
+				defer testCleanup(t, app, ret.Message)
+			}
+		})
+	}
 }
 
 func TestGetTasks(t *testing.T) {
@@ -332,4 +369,31 @@ func testCleanup(t *testing.T, app *fiber.App, id string) {
 	if err != nil {
 		t.Fatalf("got error: %v", err)
 	}
+}
+
+func createTestTask(t *testing.T, app *fiber.App) string {
+	url := "http://localhost:8080/tasks"
+	body := `{"title": "test", "description":"test"}`
+
+	createTaskReq, errReq := http.NewRequest(http.MethodPost, url, bytes.NewReader([]byte(body)))
+	if errReq != nil {
+		t.Fatalf("got error: %v", errReq)
+	}
+
+	createTaskReq.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(createTaskReq, -1)
+	if err != nil {
+		t.Fatalf("got error: %v", err)
+	}
+
+	var ret models.HTTPResponse
+	if err = json.NewDecoder(resp.Body).Decode(&ret); err != nil {
+		t.Fatalf("got error: %v", err)
+	}
+
+	if ret.Error {
+		t.Fatalf("got error: %s", ret.Message)
+	}
+
+	return ret.Message
 }

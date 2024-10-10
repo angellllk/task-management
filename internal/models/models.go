@@ -19,3 +19,8 @@ type TasksJSON struct {
 	Error bool   `json:"error"`
 	Tasks []Task `json:"tasks"`
 }
+
+type CreateTaskAPI struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
