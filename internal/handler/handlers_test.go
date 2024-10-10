@@ -1,8 +1,11 @@
-package core
+package handler
 
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/angellllk/task-management/internal/models"
+	"github.com/angellllk/task-management/internal/repository"
+	"github.com/angellllk/task-management/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"io"
 	"net/http"
@@ -10,7 +13,7 @@ import (
 )
 
 func TestCreateTask(t *testing.T) {
-	app := StartServer()
+	app := testServer(t)
 	url := "http://localhost:8080/tasks"
 	body := `{"title": "test", "description":"test"}`
 
@@ -35,7 +38,7 @@ func TestCreateTask(t *testing.T) {
 		t.Fatalf("got error: %v", errRead)
 	}
 
-	var ret baseResponse
+	var ret models.HTTPResponse
 	errUnmarshal := json.Unmarshal(respBody, &ret)
 	if errUnmarshal != nil {
 		t.Fatalf("got error: %v", errUnmarshal)
@@ -49,7 +52,7 @@ func TestCreateTask(t *testing.T) {
 }
 
 func TestGetTasks(t *testing.T) {
-	app := StartServer()
+	app := testServer(t)
 	url := "http://localhost:8080/tasks"
 	body := `{"title": "test", "description":"test"}`
 
@@ -74,7 +77,7 @@ func TestGetTasks(t *testing.T) {
 		t.Fatalf("got error: %v", errRead)
 	}
 
-	var retCreate baseResponse
+	var retCreate models.HTTPResponse
 	errUnmarshal := json.Unmarshal(respBody, &retCreate)
 	if errUnmarshal != nil {
 		t.Fatalf("got error: %v", errUnmarshal)
@@ -100,7 +103,7 @@ func TestGetTasks(t *testing.T) {
 		t.Fatalf("got error: %v", errRead)
 	}
 
-	var ret TasksJSON
+	var ret models.TasksJSON
 	errUnmarshal = json.Unmarshal(respBody, &ret)
 	if errUnmarshal != nil {
 		t.Fatalf("got error: %v", errUnmarshal)
@@ -112,7 +115,7 @@ func TestGetTasks(t *testing.T) {
 }
 
 func TestGetTask(t *testing.T) {
-	app := StartServer()
+	app := testServer(t)
 	url := "http://localhost:8080/tasks"
 	body := `{"title": "test", "description":"test"}`
 
@@ -137,7 +140,7 @@ func TestGetTask(t *testing.T) {
 		t.Fatalf("got error: %v", errRead)
 	}
 
-	var ret baseResponse
+	var ret models.HTTPResponse
 	errUnmarshal := json.Unmarshal(respBody, &ret)
 	if errUnmarshal != nil {
 		t.Fatalf("got error: %v", errUnmarshal)
@@ -163,7 +166,7 @@ func TestGetTask(t *testing.T) {
 }
 
 func TestUpdateTask(t *testing.T) {
-	app := StartServer()
+	app := testServer(t)
 	url := "http://localhost:8080/tasks"
 	body := `{"title": "test", "description":"test"}`
 
@@ -188,7 +191,7 @@ func TestUpdateTask(t *testing.T) {
 		t.Fatalf("got error: %v", errRead)
 	}
 
-	var ret baseResponse
+	var ret models.HTTPResponse
 	errUnmarshal := json.Unmarshal(respBody, &ret)
 	if errUnmarshal != nil {
 		t.Fatalf("got error: %v", errUnmarshal)
@@ -221,7 +224,7 @@ func TestUpdateTask(t *testing.T) {
 }
 
 func TestDeleteTask(t *testing.T) {
-	app := StartServer()
+	app := testServer(t)
 	url := "http://localhost:8080/tasks"
 	body := `{"title": "test", "description":"test"}`
 
@@ -246,7 +249,7 @@ func TestDeleteTask(t *testing.T) {
 		t.Fatalf("got error: %v", errRead)
 	}
 
-	var ret baseResponse
+	var ret models.HTTPResponse
 	errUnmarshal := json.Unmarshal(respBody, &ret)
 	if errUnmarshal != nil {
 		t.Fatalf("got error: %v", errUnmarshal)
@@ -280,6 +283,37 @@ func TestDeleteTask(t *testing.T) {
 	if ret.Error {
 		t.Fatalf("unexpected test result")
 	}
+}
+
+func testServer(t *testing.T) *fiber.App {
+	t.Helper()
+
+	taskRepo, err := repository.New()
+	if err != nil {
+		t.Logf("got error: %v", err)
+	}
+
+	taskService := &service.TaskService{Repo: taskRepo}
+	taskHandler := &TaskHandler{Service: taskService}
+
+	app := fiber.New()
+	app.Post("/tasks", func(ctx *fiber.Ctx) error {
+		return taskHandler.CreateTask(ctx)
+	})
+	app.Get("/tasks", func(ctx *fiber.Ctx) error {
+		return taskHandler.GetTasks(ctx)
+	})
+	app.Get("/tasks/:id", func(ctx *fiber.Ctx) error {
+		return taskHandler.GetTask(ctx)
+	})
+	app.Put("/tasks/:id", func(ctx *fiber.Ctx) error {
+		return taskHandler.UpdateTask(ctx)
+	})
+	app.Delete("/tasks/:id", func(ctx *fiber.Ctx) error {
+		return taskHandler.DeleteTask(ctx)
+	})
+
+	return app
 }
 
 func testCleanup(t *testing.T, app *fiber.App, id string) {

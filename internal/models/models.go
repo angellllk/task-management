@@ -1,8 +1,8 @@
-package core
+package models
 
 import "time"
 
-type baseResponse struct {
+type HTTPResponse struct {
 	Error   bool   `json:"error"`
 	Message string `json:"message"`
 }
