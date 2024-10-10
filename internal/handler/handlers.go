@@ -4,9 +4,7 @@ import (
 	"github.com/angellllk/task-management/internal/models"
 	"github.com/angellllk/task-management/internal/service"
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"log"
-	"time"
 )
 
 type TaskHandler struct {
@@ -14,32 +12,22 @@ type TaskHandler struct {
 }
 
 func (h *TaskHandler) CreateTask(ctx *fiber.Ctx) error {
-	var task models.Task
+	var task models.CreateTaskAPI
 
 	if errBP := ctx.BodyParser(&task); errBP != nil {
-		log.Printf("got error parsing body: %v\n", errBP)
+		log.Printf("Error parsing body: %v\n", errBP)
 		return h.handleValidationError(ctx, errBP.Error())
 	}
 
-	if len(task.Title) == 0 {
-		return h.handleValidationError(ctx, "can't have task title empty")
-	}
-
-	if len(task.Description) == 0 {
-		return h.handleValidationError(ctx, "can't have task description empty")
-	}
-
-	task.ID = uuid.NewString()
-	task.CreatedAt = time.Now()
-
-	if err := h.Service.Create(task); err != nil {
-		log.Printf("got error: %v\n", err)
+	id, err := h.Service.Create(task)
+	if err != nil {
+		log.Printf("Error creating task: %v\n", err)
 		return h.handleValidationError(ctx, "can't create task")
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(models.HTTPResponse{
 		Error:   false,
-		Message: task.ID,
+		Message: id,
 	})
 }
 
@@ -74,7 +62,7 @@ func (h *TaskHandler) GetTask(ctx *fiber.Ctx) error {
 }
 
 func (h *TaskHandler) UpdateTask(ctx *fiber.Ctx) error {
-	var updatedTask models.Task
+	var updatedTask models.TaskDB
 
 	errBP := ctx.BodyParser(&updatedTask)
 	if errBP != nil {

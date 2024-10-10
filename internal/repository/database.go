@@ -2,8 +2,10 @@ package repository
 
 import (
 	"github.com/angellllk/task-management/internal/models"
+	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"time"
 )
 
 type TaskRepository struct {
@@ -17,7 +19,7 @@ func New() (*TaskRepository, error) {
 		return nil, err
 	}
 
-	errAM := db.AutoMigrate(&models.Task{})
+	errAM := db.AutoMigrate(&models.TaskDB{})
 	if errAM != nil {
 		return nil, errAM
 	}
@@ -25,24 +27,32 @@ func New() (*TaskRepository, error) {
 	return &TaskRepository{DB: db}, nil
 }
 
-func (r *TaskRepository) Create(task models.Task) error {
-	return r.DB.Create(&task).Error
+func (r *TaskRepository) Create(task models.CreateTaskAPI) (string, error) {
+	taskDB := &models.TaskDB{
+		ID:          uuid.NewString(),
+		Title:       task.Title,
+		Description: task.Description,
+		Completed:   false,
+		CreatedAt:   time.Now(),
+	}
+
+	return taskDB.ID, r.DB.Create(taskDB).Error
 }
 
-func (r *TaskRepository) Fetch(id string) (models.Task, error) {
-	var task models.Task
+func (r *TaskRepository) Fetch(id string) (models.TaskDB, error) {
+	var task models.TaskDB
 	err := r.DB.Where("id = ?", id).First(&task).Error
 	return task, err
 }
 
-func (r *TaskRepository) FetchAll() ([]models.Task, error) {
-	var tasks []models.Task
+func (r *TaskRepository) FetchAll() ([]models.TaskDB, error) {
+	var tasks []models.TaskDB
 	err := r.DB.Find(&tasks).Error
 	return tasks, err
 }
 
-func (r *TaskRepository) Update(id string, update models.Task) error {
-	var task models.Task
+func (r *TaskRepository) Update(id string, update models.TaskDB) error {
+	var task models.TaskDB
 	if err := r.DB.Where("id = ?", id).First(&task).Error; err != nil {
 		return err
 	}
@@ -53,5 +63,5 @@ func (r *TaskRepository) Update(id string, update models.Task) error {
 }
 
 func (r *TaskRepository) Delete(id string) error {
-	return r.DB.Where("id = ?", id).Delete(&models.Task{}).Error
+	return r.DB.Where("id = ?", id).Delete(&models.TaskDB{}).Error
 }

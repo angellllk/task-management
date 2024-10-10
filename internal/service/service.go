@@ -9,19 +9,23 @@ type TaskService struct {
 	Repo *repository.TaskRepository
 }
 
-func (s *TaskService) Create(task models.Task) error {
+func (s *TaskService) Create(task models.CreateTaskAPI) (string, error) {
+	if err := task.Validate(); err != nil {
+		return "", err
+	}
+
 	return s.Repo.Create(task)
 }
 
-func (s *TaskService) Fetch(id string) (models.Task, error) {
+func (s *TaskService) Fetch(id string) (models.TaskDB, error) {
 	return s.Repo.Fetch(id)
 }
 
-func (s *TaskService) FetchAll() ([]models.Task, error) {
+func (s *TaskService) FetchAll() ([]models.TaskDB, error) {
 	return s.Repo.FetchAll()
 }
 
-func (s *TaskService) Update(id string, update models.Task) error {
+func (s *TaskService) Update(id string, update models.TaskDB) error {
 	return s.Repo.Update(id, update)
 }
 
