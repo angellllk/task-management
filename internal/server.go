@@ -1,7 +1,8 @@
 package internal
 
 import (
-	"github.com/angellllk/task-management/internal/handler"
+	"github.com/angellllk/task-management/config"
+	"github.com/angellllk/task-management/internal/handlers"
 	"github.com/angellllk/task-management/internal/repository"
 	"github.com/angellllk/task-management/internal/service"
 	"github.com/gofiber/fiber/v2"
@@ -12,13 +13,18 @@ import (
 )
 
 func StartServer() {
-	taskRepo, err := repository.New()
+	cfg, errNew := config.New("./config.json")
+	if errNew != nil {
+		log.Printf("Error creating config: %v", errNew)
+	}
+
+	taskRepo, err := repository.New(cfg.Dsn)
 	if err != nil {
 		log.Printf("got error: %v", err)
 	}
 
 	taskService := &service.TaskService{Repo: taskRepo}
-	taskHandler := &handler.TaskHandler{Service: taskService}
+	taskHandler := &handlers.TaskHandler{Service: taskService}
 
 	app := fiber.New()
 	app.Post("/tasks", func(ctx *fiber.Ctx) error {
@@ -41,7 +47,7 @@ func StartServer() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		if err = app.Listen(":8080"); err != nil {
+		if err = app.Listen(cfg.Host); err != nil {
 			log.Fatalf("Error starting server: %v", err)
 		}
 	}()

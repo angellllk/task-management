@@ -10,8 +10,7 @@ type TaskRepository struct {
 	DB *gorm.DB
 }
 
-func New() (*TaskRepository, error) {
-	dsn := "host=localhost user=postgres password=password dbname=tasks port=5432"
+func New(dsn string) (*TaskRepository, error) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err

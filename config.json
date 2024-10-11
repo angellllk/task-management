@@ -1,0 +1,9 @@
+{
+  "database": {
+    "dsn": "host=localhost user=user password=password dbname=db port=5432",
+    "db_key": "dbkeyshouldbesecure@!."
+  },
+  "api": {
+    "host": ":8080"
+  }
+}
