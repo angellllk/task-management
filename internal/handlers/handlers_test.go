@@ -355,9 +355,10 @@ func TestDeleteTask(t *testing.T) {
 func testServer(t *testing.T) *fiber.App {
 	t.Helper()
 
-	taskRepo, err := repository.New()
+	testDsn := "host=localhost user=user password=password dbname=db port=5432"
+	taskRepo, err := repository.New(testDsn)
 	if err != nil {
-		t.Logf("got error: %v", err)
+		t.Fatalf("Error creating repository: %v", err)
 	}
 
 	taskService := &service.TaskService{Repo: taskRepo}
