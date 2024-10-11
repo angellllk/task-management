@@ -12,23 +12,20 @@ type TaskHandler struct {
 }
 
 func (h *TaskHandler) CreateTask(ctx *fiber.Ctx) error {
-	var task models.TaskAPI
+	var dto models.TaskCreateDTO
 
-	if errBP := ctx.BodyParser(&task); errBP != nil {
+	if errBP := ctx.BodyParser(&dto); errBP != nil {
 		log.Printf("Error parsing body: %v\n", errBP)
 		return h.handleValidationError(ctx, errBP.Error())
 	}
 
-	id, err := h.Service.Create(task)
+	task, err := h.Service.Create(dto)
 	if err != nil {
 		log.Printf("Error creating task: %v\n", err)
 		return h.handleValidationError(ctx, "can't create task")
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(models.HTTPResponse{
-		Error:   false,
-		Message: id,
-	})
+	return ctx.Status(fiber.StatusOK).JSON(task)
 }
 
 func (h *TaskHandler) GetTasks(ctx *fiber.Ctx) error {
@@ -62,7 +59,7 @@ func (h *TaskHandler) GetTask(ctx *fiber.Ctx) error {
 }
 
 func (h *TaskHandler) UpdateTask(ctx *fiber.Ctx) error {
-	var updatedTask models.TaskAPI
+	var updatedTask models.TaskUpdateDTO
 
 	errBP := ctx.BodyParser(&updatedTask)
 	if errBP != nil {

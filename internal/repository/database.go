@@ -2,10 +2,8 @@ package repository
 
 import (
 	"github.com/angellllk/task-management/internal/models"
-	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"time"
 )
 
 type TaskRepository struct {
@@ -27,16 +25,8 @@ func New() (*TaskRepository, error) {
 	return &TaskRepository{DB: db}, nil
 }
 
-func (r *TaskRepository) Create(task models.TaskAPI) (string, error) {
-	taskDB := &models.TaskDB{
-		ID:          uuid.NewString(),
-		Title:       task.Title,
-		Description: task.Description,
-		Completed:   false,
-		CreatedAt:   time.Now(),
-	}
-
-	return taskDB.ID, r.DB.Create(taskDB).Error
+func (r *TaskRepository) Create(task models.TaskDB) error {
+	return r.DB.Create(task).Error
 }
 
 func (r *TaskRepository) Fetch(id string) (models.TaskDB, error) {
@@ -51,9 +41,9 @@ func (r *TaskRepository) FetchAll() ([]models.TaskDB, error) {
 	return tasks, err
 }
 
-func (r *TaskRepository) Update(id string, update models.TaskAPI) error {
+func (r *TaskRepository) Update(update models.TaskDB) error {
 	var task models.TaskDB
-	if err := r.DB.Where("id = ?", id).First(&task).Error; err != nil {
+	if err := r.DB.Where("id = ?", update.ID).First(&task).Error; err != nil {
 		return err
 	}
 	if err := r.DB.Model(&task).Select("Title", "Description").Updates(update).Error; err != nil {
