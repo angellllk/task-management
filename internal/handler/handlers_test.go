@@ -78,7 +78,7 @@ func TestCreateTask(t *testing.T) {
 
 			hasError := ret.Error != false
 			if hasError != tt.wantErr {
-				t.Fatal()
+				t.Fatalf("expected error: %v, got: %v", tt.wantErr, ret.Error)
 			}
 
 			if !hasError {
@@ -241,6 +241,16 @@ func TestUpdateTask(t *testing.T) {
 			},
 			true,
 			false,
+		},
+		{
+			"invalid-id",
+			url + "test",
+			models.TaskUpdateDTO{
+				Title:       "update",
+				Description: "update",
+			},
+			false,
+			true,
 		},
 	}
 

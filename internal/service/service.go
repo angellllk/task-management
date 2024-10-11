@@ -65,15 +65,19 @@ func (s *TaskService) Update(id string, dto models.TaskUpdateDTO) (*models.TaskR
 	if err := dto.Validate(); err != nil {
 		return nil, err
 	}
+	fetch, err := s.Repo.Fetch(id)
+	if err != nil {
+		return nil, err
+	}
 
 	taskDB := models.TaskDB{
 		ID:          id,
 		Title:       dto.Title,
 		Description: dto.Description,
-		Completed:   false,
-		CreatedAt:   time.Time{},
+		Completed:   dto.Completed,
+		CreatedAt:   fetch.CreatedAt,
 	}
-	if err := s.Repo.Update(taskDB); err != nil {
+	if err = s.Repo.Update(taskDB); err != nil {
 		return nil, err
 	}
 

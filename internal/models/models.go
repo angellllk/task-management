@@ -55,6 +55,7 @@ func (t *TaskCreateDTO) Validate() error {
 type TaskUpdateDTO struct {
 	Title       string `json:"title" validate:"required"`
 	Description string `json:"description" validate:"required"`
+	Completed   bool   `json:"completed" validate:"required"`
 }
 
 func (t *TaskUpdateDTO) Validate() error {
