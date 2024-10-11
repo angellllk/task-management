@@ -18,12 +18,12 @@ func TestCreateTask(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		body    models.CreateTaskAPI
+		body    models.TaskAPI
 		wantErr bool
 	}{
 		{
 			"create-task",
-			models.CreateTaskAPI{
+			models.TaskAPI{
 				Title:       "test",
 				Description: "test",
 			},
@@ -31,7 +31,7 @@ func TestCreateTask(t *testing.T) {
 		},
 		{
 			"create-task-empty-title",
-			models.CreateTaskAPI{
+			models.TaskAPI{
 				Title:       "",
 				Description: "test",
 			},
@@ -39,7 +39,7 @@ func TestCreateTask(t *testing.T) {
 		},
 		{
 			"create-task-empty-description",
-			models.CreateTaskAPI{
+			models.TaskAPI{
 				Title:       "test",
 				Description: "",
 			},

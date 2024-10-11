@@ -27,7 +27,7 @@ func New() (*TaskRepository, error) {
 	return &TaskRepository{DB: db}, nil
 }
 
-func (r *TaskRepository) Create(task models.CreateTaskAPI) (string, error) {
+func (r *TaskRepository) Create(task models.TaskAPI) (string, error) {
 	taskDB := &models.TaskDB{
 		ID:          uuid.NewString(),
 		Title:       task.Title,
@@ -51,12 +51,12 @@ func (r *TaskRepository) FetchAll() ([]models.TaskDB, error) {
 	return tasks, err
 }
 
-func (r *TaskRepository) Update(id string, update models.TaskDB) error {
+func (r *TaskRepository) Update(id string, update models.TaskAPI) error {
 	var task models.TaskDB
 	if err := r.DB.Where("id = ?", id).First(&task).Error; err != nil {
 		return err
 	}
-	if err := r.DB.Model(&task).Updates(update).Error; err != nil {
+	if err := r.DB.Model(&task).Select("Title", "Description").Updates(update).Error; err != nil {
 		return err
 	}
 	return nil

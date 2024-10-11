@@ -23,16 +23,16 @@ type TasksJSON struct {
 	Tasks []TaskDB `json:"tasks"`
 }
 
-type CreateTaskAPI struct {
+type TaskAPI struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 }
 
-func (c *CreateTaskAPI) Validate() error {
-	if c.Title == "" {
+func (t *TaskAPI) Validate() error {
+	if t.Title == "" {
 		return errors.New("title cannot be empty")
 	}
-	if c.Description == "" {
+	if t.Description == "" {
 		return errors.New("description cannot be empty")
 	}
 	return nil

@@ -12,7 +12,7 @@ type TaskHandler struct {
 }
 
 func (h *TaskHandler) CreateTask(ctx *fiber.Ctx) error {
-	var task models.CreateTaskAPI
+	var task models.TaskAPI
 
 	if errBP := ctx.BodyParser(&task); errBP != nil {
 		log.Printf("Error parsing body: %v\n", errBP)
@@ -34,7 +34,7 @@ func (h *TaskHandler) CreateTask(ctx *fiber.Ctx) error {
 func (h *TaskHandler) GetTasks(ctx *fiber.Ctx) error {
 	tasks, err := h.Service.FetchAll()
 	if err != nil {
-		log.Printf("got error: %v", err)
+		log.Printf("Error fetching all tasks: %v", err)
 		return h.handleValidationError(ctx, "can't fetch tasks")
 	}
 
@@ -54,7 +54,7 @@ func (h *TaskHandler) GetTask(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	task, err := h.Service.Fetch(id)
 	if err != nil {
-		log.Printf("got error: %v\n", err)
+		log.Printf("Error fetching task for id %s: %v\n", id, err)
 		return h.handleValidationError(ctx, "can't fetch task")
 	}
 
@@ -62,25 +62,17 @@ func (h *TaskHandler) GetTask(ctx *fiber.Ctx) error {
 }
 
 func (h *TaskHandler) UpdateTask(ctx *fiber.Ctx) error {
-	var updatedTask models.TaskDB
+	var updatedTask models.TaskAPI
 
 	errBP := ctx.BodyParser(&updatedTask)
 	if errBP != nil {
-		log.Printf("got error parsing body: %v\n", errBP)
+		log.Printf("Error parsing body: %v\n", errBP)
 		return h.handleValidationError(ctx, "can't parse body")
-	}
-
-	if len(updatedTask.Title) == 0 {
-		return h.handleValidationError(ctx, "can't have task title empty")
-	}
-
-	if len(updatedTask.Description) == 0 {
-		return h.handleValidationError(ctx, "can't have task description empty")
 	}
 
 	id := ctx.Params("id")
 	if err := h.Service.Update(id, updatedTask); err != nil {
-		log.Printf("got error: %v\n", err)
+		log.Printf("Error updating task with id %s: %v\n", id, err)
 		return h.handleValidationError(ctx, "can't update task")
 	}
 
@@ -93,7 +85,7 @@ func (h *TaskHandler) UpdateTask(ctx *fiber.Ctx) error {
 func (h *TaskHandler) DeleteTask(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	if err := h.Service.Delete(id); err != nil {
-		log.Printf("got error: %v\n", err)
+		log.Printf("Error deleting task with id %s: %v\n", id, err)
 		return h.handleValidationError(ctx, "can't delete task")
 	}
 
