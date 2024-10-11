@@ -25,7 +25,11 @@ func (h *TaskHandler) CreateTask(ctx *fiber.Ctx) error {
 		return h.handleValidationError(ctx, "can't create task")
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(task)
+	resp := models.TaskResponseJSON{
+		Error: false,
+		Task:  *task,
+	}
+	return ctx.Status(fiber.StatusOK).JSON(resp)
 }
 
 func (h *TaskHandler) GetTasks(ctx *fiber.Ctx) error {
@@ -39,12 +43,11 @@ func (h *TaskHandler) GetTasks(ctx *fiber.Ctx) error {
 		return h.handleValidationError(ctx, "no tasks found")
 	}
 
-	ret := models.TasksJSON{
+	resp := models.TasksResponseJson{
 		Error: false,
 		Tasks: tasks,
 	}
-
-	return ctx.Status(fiber.StatusOK).JSON(ret)
+	return ctx.Status(fiber.StatusOK).JSON(resp)
 }
 
 func (h *TaskHandler) GetTask(ctx *fiber.Ctx) error {
@@ -55,7 +58,11 @@ func (h *TaskHandler) GetTask(ctx *fiber.Ctx) error {
 		return h.handleValidationError(ctx, "can't fetch task")
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(task)
+	resp := models.TaskResponseJSON{
+		Error: false,
+		Task:  *task,
+	}
+	return ctx.Status(fiber.StatusOK).JSON(resp)
 }
 
 func (h *TaskHandler) UpdateTask(ctx *fiber.Ctx) error {
@@ -68,15 +75,17 @@ func (h *TaskHandler) UpdateTask(ctx *fiber.Ctx) error {
 	}
 
 	id := ctx.Params("id")
-	if err := h.Service.Update(id, updatedTask); err != nil {
+	task, err := h.Service.Update(id, updatedTask)
+	if err != nil {
 		log.Printf("Error updating task with id %s: %v\n", id, err)
 		return h.handleValidationError(ctx, "can't update task")
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(models.HTTPResponse{
-		Error:   false,
-		Message: "",
-	})
+	resp := models.TaskResponseJSON{
+		Error: false,
+		Task:  *task,
+	}
+	return ctx.Status(fiber.StatusOK).JSON(resp)
 }
 
 func (h *TaskHandler) DeleteTask(ctx *fiber.Ctx) error {
@@ -86,14 +95,15 @@ func (h *TaskHandler) DeleteTask(ctx *fiber.Ctx) error {
 		return h.handleValidationError(ctx, "can't delete task")
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(models.HTTPResponse{
-		Error:   false,
-		Message: "",
-	})
+	resp := models.TaskResponseJSON{
+		Error: false,
+		Task:  models.TaskResponseDTO{},
+	}
+	return ctx.Status(fiber.StatusOK).JSON(resp)
 }
 
 func (h *TaskHandler) handleValidationError(ctx *fiber.Ctx, message string) error {
-	br := models.HTTPResponse{
+	br := models.TaskResponseJSON{
 		Error:   true,
 		Message: message,
 	}

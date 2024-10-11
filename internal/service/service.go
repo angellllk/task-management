@@ -29,13 +29,7 @@ func (s *TaskService) Create(dto models.TaskCreateDTO) (*models.TaskResponseDTO,
 	}
 
 	// Return the response DTO
-	return &models.TaskResponseDTO{
-		ID:          taskDB.ID,
-		Title:       taskDB.Title,
-		Description: taskDB.Description,
-		Completed:   taskDB.Completed,
-		CreatedAt:   taskDB.CreatedAt,
-	}, nil
+	return taskDB.ToDTO(), nil
 }
 
 func (s *TaskService) Fetch(id string) (*models.TaskResponseDTO, error) {
@@ -48,25 +42,28 @@ func (s *TaskService) Fetch(id string) (*models.TaskResponseDTO, error) {
 		return nil, err
 	}
 
-	return &models.TaskResponseDTO{
-		ID:          taskDB.ID,
-		Title:       taskDB.Title,
-		Description: taskDB.Description,
-		Completed:   taskDB.Completed,
-		CreatedAt:   taskDB.CreatedAt,
-	}, nil
+	return taskDB.ToDTO(), nil
 }
 
-func (s *TaskService) FetchAll() ([]models.TaskDB, error) {
-	return s.Repo.FetchAll()
+func (s *TaskService) FetchAll() ([]models.TaskResponseDTO, error) {
+	tasks, err := s.Repo.FetchAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var tasksDTO []models.TaskResponseDTO
+	for _, t := range tasks {
+		tasksDTO = append(tasksDTO, *t.ToDTO())
+	}
+	return tasksDTO, nil
 }
 
-func (s *TaskService) Update(id string, dto models.TaskUpdateDTO) error {
+func (s *TaskService) Update(id string, dto models.TaskUpdateDTO) (*models.TaskResponseDTO, error) {
 	if err := uuid.Validate(id); err != nil {
-		return err
+		return nil, err
 	}
 	if err := dto.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
 	taskDB := models.TaskDB{
@@ -76,8 +73,11 @@ func (s *TaskService) Update(id string, dto models.TaskUpdateDTO) error {
 		Completed:   false,
 		CreatedAt:   time.Time{},
 	}
-	// Call repository to update the task
-	return s.Repo.Update(taskDB)
+	if err := s.Repo.Update(taskDB); err != nil {
+		return nil, err
+	}
+
+	return taskDB.ToDTO(), nil
 }
 
 func (s *TaskService) Delete(id string) error {

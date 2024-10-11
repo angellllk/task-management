@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-type HTTPResponse struct {
-	Error   bool   `json:"error"`
-	Message string `json:"message"`
-}
-
 type TaskDB struct {
 	ID          string    `json:"id"`
 	Title       string    `json:"title"`
@@ -18,9 +13,26 @@ type TaskDB struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
-type TasksJSON struct {
-	Error bool     `json:"error"`
-	Tasks []TaskDB `json:"tasks"`
+func (tDB *TaskDB) ToDTO() *TaskResponseDTO {
+	dto := TaskResponseDTO{
+		ID:          tDB.ID,
+		Title:       tDB.Title,
+		Description: tDB.Description,
+		Completed:   tDB.Completed,
+		CreatedAt:   tDB.CreatedAt,
+	}
+	return &dto
+}
+
+type TaskResponseJSON struct {
+	Error   bool            `json:"error"`
+	Message string          `json:"message"`
+	Task    TaskResponseDTO `json:"task"`
+}
+
+type TasksResponseJson struct {
+	Error bool              `json:"error"`
+	Tasks []TaskResponseDTO `json:"tasks"`
 }
 
 // TaskCreateDTO defines the fields needed to create a new task
@@ -41,8 +53,8 @@ func (t *TaskCreateDTO) Validate() error {
 
 // TaskUpdateDTO defines the fields allowed when updating an existing task
 type TaskUpdateDTO struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	Title       string `json:"title" validate:"required"`
+	Description string `json:"description" validate:"required"`
 }
 
 func (t *TaskUpdateDTO) Validate() error {
