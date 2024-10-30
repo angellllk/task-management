@@ -11,4 +11,4 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /docker-app -v
 
 EXPOSE 8080
 
-CMD["/docker-app"]
+CMD ["/docker-app"]
