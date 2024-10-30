@@ -355,7 +355,7 @@ func TestDeleteTask(t *testing.T) {
 func testServer(t *testing.T) *fiber.App {
 	t.Helper()
 
-	testDsn := "host=postgres user=user password=password dbname=db port=5432"
+	testDsn := "host=127.0.0.1 user=user password=password dbname=db port=5432"
 	taskRepo, err := repository.New(testDsn)
 	if err != nil {
 		t.Fatalf("Error creating repository: %v", err)
